@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'animated_button.dart';
+
 mixin Drawable {
   void draw(Canvas canvas, Size size);
 }
@@ -25,15 +27,14 @@ class DrawablePainter extends CustomPainter {
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
-class Aligned with Drawable {
+class Aligned extends Particle with Drawable {
   final Alignment alignment;
-  final Drawable child;
+  final Particle child;
 
   Aligned({
     this.alignment = Alignment.center,
     required this.child,
   });
-
 
   @override
   void draw(Canvas canvas, Size size) {
@@ -50,21 +51,47 @@ mixin Updatable {
   void update(Animation animation);
 }
 
+enum FadingDirection { fadeIn, fadeOut }
+
 mixin Fading on Updatable {
+  FadingDirection direction = FadingDirection.fadeOut;
   double opacity = 0.0;
 
   @override
   void update(Animation controller) {
-    opacity = controller.value;
+    print('value: ${controller.value as double}');
+    double clamped = (controller.value as double).clamp(0, 1);
+    opacity = (direction == FadingDirection.fadeOut) ? 1 - clamped : clamped;
   }
 }
 
 class FadingRect extends Particle with Fading {
+  Size size;
+
+  FadingRect({
+    this.size = const Size(50, 50),
+  });
+
   @override
   void draw(Canvas canvas, Size size) {
     canvas.drawRect(
-      Rect.fromCenter(center: Offset.zero, width: 10, height: 10),
-      Paint()..color = Colors.white.withOpacity(opacity),
+      Rect.fromCenter(center: Offset.zero, width: this.size.width, height: this.size.height),
+      Paint()..color = Colors.pink.withOpacity(opacity),
+    );
+  }
+}
+
+class FadingCircle extends Particle with Fading {
+  double radius;
+
+  FadingCircle({this.radius = 10});
+
+  @override
+  void draw(Canvas canvas, Size size) {
+    canvas.drawCircle(
+      Offset.zero,
+      radius,
+      Paint()..color = Colors.pink.withOpacity(opacity),
     );
   }
 }
@@ -98,7 +125,23 @@ class ParticlePainter extends CustomPainter {
   bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
 
+class ScalingParticle extends Particle with Scaling, NestedParticle {
+  ScalingParticle({childParticle}) {
+    from = 0.0;
+    to = 1.0;
+    child = childParticle;
+  }
+
+  @override
+  void draw(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(current);
+    super.draw(canvas, size);
+    canvas.restore();
+  }
+}
+
 typedef ParticlesWidgetBuilder = Widget Function(
-    BuildContext context,
-    AnimationController controller,
-    );
+  BuildContext context,
+  AnimationController controller,
+);

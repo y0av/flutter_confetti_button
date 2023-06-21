@@ -1,3 +1,4 @@
+import 'package:confetti_button/src/animated_button.dart';
 import 'package:confetti_button/src/particle_widget.dart';
 import 'package:flutter/material.dart';
 
